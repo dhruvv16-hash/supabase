@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Preview Branch Privilege & Trigger Reconciler | Issue #49426</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.35 21.05C12.8 21.6 11.9 21.2 11.9 20.45V13.85H4.25C3.35 13.85 2.85 12.8 3.4 12.2L13.7 1.85C14.25 1.3 15.15 1.7 15.15 2.45V9.05H22.8C23.7 9.05 24.2 10.1 23.65 10.7L13.35 21.05Z" fill="#3ECF8E"/>
+        </svg>
+        <div>
+          <h2>Supabase</h2>
+          <span class="badge-tag">Branching Diagnostic</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <a href="#matrix" class="nav-item active">
+          <span class="icon">🛡️</span> ACL Parity Matrix
+        </a>
+        <a href="#triggers" class="nav-item">
+          <span class="icon">⚡</span> Auth Triggers
+        </a>
+        <a href="#reconcile" class="nav-item">
+          <span class="icon">🔧</span> Schema Reconciler
+        </a>
+      </nav>
+
+      <div class="branch-card">
+        <div class="info-row">
+          <span class="label">Target:</span>
+          <span class="val">Preview Branch</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Postgres:</span>
+          <code class="val-code">v17.6</code>
+        </div>
+        <div class="info-row">
+          <span class="label">Issue:</span>
+          <a href="https://github.com/supabase/supabase/issues/49426" target="_blank" class="link">#49426</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div>
+          <h1>Preview Branch Privilege & Trigger Parity</h1>
+          <p class="subtitle">Diagnostic & Automated ACL/Trigger Replay for Supabase Management API Branches</p>
+        </div>
+        <div class="actions">
+          <button id="btn-run-diff" class="btn btn-secondary">
+            <span class="btn-icon">🔍</span> Run ACL Diff
+          </button>
+          <button id="btn-reconcile" class="btn btn-primary">
+            <span class="btn-icon">⚡</span> Reconcile Branch Privileges
+          </button>
+        </div>
+      </header>
+
+      <!-- Alert Banner -->
+      <section id="alert-banner" class="status-banner error">
+        <div class="banner-icon">⚠️</div>
+        <div class="banner-content">
+          <h3 id="banner-title">CRITICAL: Privilege Divergence & Missing Auth Triggers Detected</h3>
+          <p id="banner-description">
+            Branch carries default schema ACLs instead of parent grants: <strong>204 function ACLs</strong> and <strong>45 table ACLs</strong> differ from parent. Trigger <code>on_auth_user_created</code> is missing from <code>auth.users</code>.
+          </p>
+        </div>
+        <div class="banner-badge" id="banner-badge">DIVERGED</div>
+      </section>
+
+      <!-- Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">Function ACL Parity</span>
+          <div class="metric-value error" id="metric-func">204 Divergences</div>
+          <small>Functions exposed to anon/authenticated</small>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Table ACL Parity</span>
+          <div class="metric-value error" id="metric-table">45 Divergences</div>
+          <small>Tables missing revoked permissions</small>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">auth.users Triggers</span>
+          <div class="metric-value error" id="metric-triggers">0 / 1 Active (Missing)</div>
+          <small>Profile creation on signup fails</small>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Row Level Security</span>
+          <div class="metric-value success">118 / 118 Intact</div>
+          <small>RLS policies properly preserved</small>
+        </div>
+      </div>
+
+      <!-- Diff & Audit Tables -->
+      <div class="dashboard-grid">
+        <!-- ACL Diff Viewer -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Object Privilege Comparison (Parent vs. Branch)</h3>
+            <span class="tag-status" id="acl-tag">SECURITY RISK</span>
+          </div>
+          <div class="table-container">
+            <table class="diff-table">
+              <thead>
+                <tr>
+                  <th>Object</th>
+                  <th>Parent Grant</th>
+                  <th>Branch Current ACL</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="acl-tbody">
+                <tr>
+                  <td><code>activate_tenant(uuid)</code></td>
+                  <td><span class="badge badge-parent">service_role=X</span></td>
+                  <td id="acl-func-branch"><span class="badge badge-branch-err">anon=X, auth=X, service=X</span></td>
+                  <td id="acl-func-status"><span class="status-pill pill-err">Exposed</span></td>
+                </tr>
+                <tr>
+                  <td><code>contacts</code> (table)</td>
+                  <td><span class="badge badge-parent">auth=arwd, service=arwd</span></td>
+                  <td id="acl-table1-branch"><span class="badge badge-branch-err">+ anon=arwdDxtm (Full)</span></td>
+                  <td id="acl-table1-status"><span class="status-pill pill-err">Unrestricted</span></td>
+                </tr>
+                <tr>
+                  <td><code>call_disposition_catalog</code></td>
+                  <td><span class="badge badge-parent">authenticated=r (Read)</span></td>
+                  <td id="acl-table2-branch"><span class="badge badge-branch-err">authenticated=arwd (Write)</span></td>
+                  <td id="acl-table2-status"><span class="status-pill pill-err">Overprivileged</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Auth Trigger Inspector -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Auth Schema Triggers (auth.users)</h3>
+            <span class="tag-status" id="trigger-tag">MISSING</span>
+          </div>
+          <div class="trigger-box" id="trigger-box">
+            <div class="trigger-card error" id="trigger-card-1">
+              <div class="trigger-header">
+                <strong>users :: on_auth_user_created</strong>
+                <span class="badge-status" id="trigger-badge">ABSENT ON BRANCH</span>
+              </div>
+              <p class="trigger-detail">AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION handle_new_user();</p>
+              <div class="trigger-meta" id="trigger-meta">
+                <span>Impact: <code>auth.admin.createUser()</code> returns <code>PGRST116 (0 rows)</code> on profiles.</span>
+              </div>
+            </div>
+          </div>
+          <div class="reconcile-sql-preview">
+            <div class="sql-header">
+              <span>Automated Replay SQL Script</span>
+              <button id="btn-copy-sql" class="btn-sm">Copy SQL</button>
+            </div>
+            <pre><code id="sql-code">-- 1. Replay object privileges
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION activate_tenant(uuid) TO service_role;
+
+-- 2. Replay auth schema triggers
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();</code></pre>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
