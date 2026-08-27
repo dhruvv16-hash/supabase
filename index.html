@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Project DNS & Auth Recovery Diagnostic | qvovxdrhnponqdgazgew</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.35 21.05C12.8 21.6 11.9 21.2 11.9 20.45V13.85H4.25C3.35 13.85 2.85 12.8 3.4 12.2L13.7 1.85C14.25 1.3 15.15 1.7 15.15 2.45V9.05H22.8C23.7 9.05 24.2 10.1 23.65 10.7L13.35 21.05Z" fill="#3ECF8E"/>
+        </svg>
+        <div>
+          <h2>Supabase</h2>
+          <span class="badge-tag">Infra Diagnostic</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <a href="#overview" class="nav-item active">
+          <span class="icon">📊</span> Overview
+        </a>
+        <a href="#dns-checker" class="nav-item">
+          <span class="icon">🌐</span> DNS Resolver
+        </a>
+        <a href="#auth-tester" class="nav-item">
+          <span class="icon">🔐</span> Auth Integration
+        </a>
+        <a href="#reconciliation" class="nav-item">
+          <span class="icon">🛠️</span> Reconciliation
+        </a>
+      </nav>
+
+      <div class="project-info-card">
+        <div class="info-row">
+          <span class="label">Project Ref:</span>
+          <code class="ref-code">qvovxdrhnponqdgazgew</code>
+        </div>
+        <div class="info-row">
+          <span class="label">App Domain:</span>
+          <span class="app-url">blozmarket.netlify.app</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Issue Ref:</span>
+          <a href="https://github.com/supabase/supabase/issues/49455" target="_blank" class="link">#49455</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div>
+          <h1>Project DNS & Auth Health Console</h1>
+          <p class="subtitle">Diagnostic & Automated Reconciliation for Orphaned DNS Records</p>
+        </div>
+        <div class="actions">
+          <button id="btn-run-diagnostics" class="btn btn-secondary">
+            <span class="btn-icon">⚡</span> Run Full Health Check
+          </button>
+          <button id="btn-reconcile-dns" class="btn btn-primary">
+            <span class="btn-icon">🚀</span> Trigger DNS Reconciliation
+          </button>
+        </div>
+      </header>
+
+      <!-- Status Banner -->
+      <section id="status-banner" class="status-banner error">
+        <div class="banner-icon">⚠️</div>
+        <div class="banner-content">
+          <h3 id="banner-title">CRITICAL: Public DNS NXDOMAIN (Status 3) Detected</h3>
+          <p id="banner-description">
+            Domain <code>qvovxdrhnponqdgazgew.supabase.co</code> does not resolve globally. 
+            All client requests from <strong>https://blozmarket.netlify.app</strong> to GoTrue Auth & PostgREST are failing with <code>ERR_NAME_NOT_RESOLVED</code>.
+          </p>
+        </div>
+        <div class="banner-badge" id="banner-badge">OUTAGE</div>
+      </section>
+
+      <!-- Grid Cards -->
+      <div class="dashboard-grid">
+        <!-- Dashboard Instance vs DNS Sync Matrix -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Infrastructure State Matrix</h3>
+            <span class="sync-indicator" id="sync-indicator">OUT OF SYNC</span>
+          </div>
+          <div class="state-matrix">
+            <div class="state-item">
+              <span class="state-label">Dashboard Instance State</span>
+              <div class="state-value success">
+                <span class="dot green"></span> ACTIVE_HEALTHY
+              </div>
+              <small>Compute container is running on AWS us-east-1</small>
+            </div>
+            <div class="state-item">
+              <span class="state-label">Route53 / Cloudflare DNS Record</span>
+              <div class="state-value error" id="dns-record-state">
+                <span class="dot red"></span> NXDOMAIN / PURGED
+              </div>
+              <small id="dns-record-desc">Record removed during pause sync worker cycle</small>
+            </div>
+            <div class="state-item">
+              <span class="state-label">Client Auth Status</span>
+              <div class="state-value error" id="auth-state">
+                <span class="dot red"></span> BLOCKED (Network Error)
+              </div>
+              <small id="auth-state-desc">GoTrue client cannot establish HTTPS handshake</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live DNS Global Probe Simulator -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Global DNS Resolution Probes</h3>
+            <button id="btn-refresh-dns" class="btn-sm">Query Nameservers</button>
+          </div>
+          <div class="probe-list">
+            <div class="probe-item">
+              <div class="probe-source">
+                <strong>Google DNS (8.8.8.8)</strong>
+                <code>qvovxdrhnponqdgazgew.supabase.co</code>
+              </div>
+              <div class="probe-result" id="probe-google">
+                <span class="status-code code-error">Status: 3 (NXDOMAIN)</span>
+              </div>
+            </div>
+            <div class="probe-item">
+              <div class="probe-source">
+                <strong>Cloudflare DNS (1.1.1.1)</strong>
+                <code>qvovxdrhnponqdgazgew.supabase.co</code>
+              </div>
+              <div class="probe-result" id="probe-cloudflare">
+                <span class="status-code code-error">Status: 3 (NXDOMAIN)</span>
+              </div>
+            </div>
+            <div class="probe-item">
+              <div class="probe-source">
+                <strong>Database Direct (Pooler)</strong>
+                <code>db.qvovxdrhnponqdgazgew.supabase.co</code>
+              </div>
+              <div class="probe-result" id="probe-db">
+                <span class="status-code code-error">Status: 3 (NXDOMAIN)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auth Client Simulation & Live Logs -->
+      <div class="dashboard-grid">
+        <!-- Auth Tester -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Production Auth Simulator (blozmarket.netlify.app)</h3>
+          </div>
+          <div class="auth-tester-box">
+            <div class="form-group">
+              <label>Target Supabase URL:</label>
+              <input type="text" value="https://qvovxdrhnponqdgazgew.supabase.co" readonly class="input-code">
+            </div>
+            <div class="form-actions">
+              <button id="btn-test-auth" class="btn btn-secondary">Simulate User Login</button>
+              <button id="btn-test-signup" class="btn btn-secondary">Simulate User SignUp</button>
+            </div>
+            <div class="auth-response-box" id="auth-response">
+              <pre><code>{
+  "error": "TypeError: Failed to fetch",
+  "cause": "net::ERR_NAME_NOT_RESOLVED",
+  "endpoint": "https://qvovxdrhnponqdgazgew.supabase.co/auth/v1/token?grant_type=password",
+  "status": 0
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terminal Diagnostic Console -->
+        <div class="card terminal-card">
+          <div class="card-header">
+            <h3>Orchestration & DNS Sync Logs</h3>
+            <button id="btn-clear-logs" class="btn-sm">Clear</button>
+          </div>
+          <div class="terminal-logs" id="terminal-logs">
+            <div class="log-entry warn">[WARN] [DnsWatcher] Project qvovxdrhnponqdgazgew is ACTIVE but has no A/CNAME record in supabase.co zone.</div>
+            <div class="log-entry error">[ERROR] [GoTrueClient] Failed to reach https://qvovxdrhnponqdgazgew.supabase.co/auth/v1/health -> NXDOMAIN</div>
+            <div class="log-entry info">[INFO] [Reconciler] Waiting for manual or automated DNS republication trigger...</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
