@@ -91,7 +91,7 @@ Our approach for client libraries is modular. Each sub-library is a standalone i
   </tr>
   END ROW -->
   <!-- /notranslate -->
-  <th colspan="7">⚡️ Official ⚡️</th>
+  <th colspan="7"> Official </th>
   <!-- notranslate -->
   <tr>
     <td>JavaScript (TypeScript)</td>
@@ -130,7 +130,7 @@ Our approach for client libraries is modular. Each sub-library is a standalone i
     <td><a href="https://github.com/supabase/functions-py" target="_blank" rel="noopener noreferrer">functions-py</a></td>
   </tr>
   <!-- /notranslate -->
-  <th colspan="7">💚 Community 💚</th>
+  <th colspan="7"> Community </th>
   <!-- notranslate -->
   <tr>
     <td>C#</td>
